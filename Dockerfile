@@ -27,11 +27,14 @@ COPY requirements.txt .
 # Install dependencies (installing dlib natively for Linux container)
 RUN pip install --no-cache-dir dlib face_recognition gunicorn Flask Werkzeug Jinja2 Pillow numpy opencv-python
 
+# Patch gunicorn entry point so any CLI argument containing $PORT is automatically sanitized before validation
+RUN python -c 'import gunicorn.app.wsgiapp as w; path = w.__file__; open(path, "w").write("import sys, os\nport = os.environ.get(\"PORT\", \"5000\")\nsys.argv = [a.replace(\"\$PORT\", port) for a in sys.argv]\n" + open(path).read())'
+
 # Copy application source code
 COPY . .
 
 # Expose port 5000 (Railway assigns $PORT automatically)
 EXPOSE 5000
 
-# Start application server using gunicorn.conf.py
+# Start application server using gunicorn
 CMD ["gunicorn", "app:app"]
