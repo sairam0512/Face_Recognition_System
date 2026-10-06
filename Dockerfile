@@ -30,9 +30,8 @@ RUN pip install --no-cache-dir dlib face_recognition gunicorn Flask Werkzeug Jin
 # Copy application source code
 COPY . .
 
-# Expose port (Railway assigns $PORT automatically)
-ENV PORT=5000
+# Expose port 5000 (Railway assigns $PORT automatically)
 EXPOSE 5000
 
-# Start application server with shell execution so PORT environment variable resolves correctly
-CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 2 --timeout 120 app:app"]
+# Start application server using gunicorn.conf.py
+CMD ["gunicorn", "app:app"]
