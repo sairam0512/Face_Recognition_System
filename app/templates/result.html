@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Biometric scan results, showing detected faces and matching database identity details.">
+  <title>Analysis Result - Biometric Portal</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.0.3">
+  <style>
+    .result-actions {
+      display: flex;
+      gap: 16px;
+      margin-top: auto;
+      padding-top: 24px;
+    }
+    .result-actions a {
+      flex: 1;
+    }
+    .result-actions button {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-section">
+        <h1>BIOMETRIC <span>PORTAL</span></h1>
+        <div class="logo-badge">SECURE HUB</div>
+      </div>
+      <nav>
+        <a href="{{ url_for('main.index') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          Dashboard
+        </a>
+        <a href="{{ url_for('main.upload_page') }}" class="active">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload & Scan
+        </a>
+        <a href="{{ url_for('main.webcam_page') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Webcam Scanner
+        </a>
+        <a href="{{ url_for('main.manage_page') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Face Registry
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px;">
+          Status: <span class="status-badge status-active">Online</span>
+        </span>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">Biometric Engine v1.3.0</span>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <h2>Scan Diagnostics Completed</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 32px;">The biometric engine successfully processed the input source image, located human faces, and compared embeddings against the registration database.</p>
+
+      <div class="result-layout">
+        
+        <!-- Left Column: Annotated Image -->
+        <div class="result-image-wrapper">
+          {% if source == "upload" and result.annotated_filename %}
+            <img src="{{ url_for('main.uploaded_file', filename=result.annotated_filename) }}" class="result-image" alt="Annotated face scan">
+          {% elif source == "upload" and filename %}
+            <img src="{{ url_for('main.uploaded_file', filename=filename) }}" class="result-image" alt="Uploaded face scan">
+          {% else %}
+            <div style="padding: 60px; text-align: center; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 14px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="17" x2="15" y2="17"/><line x1="9" y1="13" x2="13" y2="13"/><circle cx="9" cy="9" r="1"/></svg>
+              No scan image available
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Right Column: Recognition Details -->
+        <div class="result-details">
+          <h3 style="margin-bottom: 16px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px; color: var(--primary);"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+            Biometric Analysis Results
+          </h3>
+          
+          <div class="card" style="margin-bottom: 0; flex: 1; display: flex; flex-direction: column; background: rgba(0, 0, 0, 0.25);">
+            {% if result.status == 'ok' %}
+              <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 18px;">
+                Detected <strong style="color: var(--primary);">{{ result.results|length }}</strong> active face signature(s):
+              </p>
+              <ul class="result-list" style="flex: 1;">
+                {% for r in result.results %}
+                  {% if r.name != "Unknown" %}
+                    <li class="result-item match">
+                      <div>
+                        <div class="result-name">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px; color: var(--success);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                          {{ r.name }}
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; font-family: 'JetBrains Mono', monospace;">Signature Index: #{{ r.face_index }}</div>
+                      </div>
+                      <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                        <span class="status-badge status-active" style="padding: 4px 8px; font-size: 0.75rem;">Verified</span>
+                        {% if r.distance %}
+                          <div class="result-score" style="color: var(--success);">Similarity: {{ '%.1f'|format((1.0 - r.distance) * 100) }}%</div>
+                        {% endif %}
+                      </div>
+                    </li>
+                  {% else %}
+                    <li class="result-item no-match">
+                      <div>
+                        <div class="result-name" style="color: var(--danger);">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px; color: var(--danger);"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+                          Unregistered Subject
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px; font-family: 'JetBrains Mono', monospace;">Signature Index: #{{ r.face_index }}</div>
+                      </div>
+                      <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                        <span class="status-badge" style="background: rgba(244, 63, 94, 0.08); color: var(--danger); border: 1px solid rgba(244, 63, 94, 0.2); padding: 4px 8px; font-size: 0.75rem;">Unknown</span>
+                      </div>
+                    </li>
+                  {% endif %}
+                {% endfor %}
+              </ul>
+            {% else %}
+              <div style="text-align: center; padding: 40px 20px; margin: auto;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--danger); margin-bottom: 14px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <p style="color: var(--danger); font-weight: 600; font-size: 1.1rem; margin-bottom: 8px;">Scan Diagnostics Failed</p>
+                <p style="color: var(--text-secondary); font-size: 0.9rem;">{{ result.message }}</p>
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="result-actions">
+            <a href="{{ url_for('main.upload_page') }}" style="text-decoration: none;">
+              <button>Scan Another</button>
+            </a>
+            <a href="{{ url_for('main.index') }}" style="text-decoration: none;">
+              <button class="btn-secondary">Dashboard</button>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+      <footer>
+        <a href="{{ url_for('main.upload_page') }}" class="back-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Scan Another Image
+        </a>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,2 @@
+dlib==20.0.0; platform_system != "Linux"  # Prevent source dlib on Linux
+dlib-bin==20.0.0  # Force dlib-bin on all platforms

@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Biometric face database administrative controls. Register and manage known identities.">
+  <title>Identity Registry - Biometric Portal</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.0.3">
+  <style>
+    .manage-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 32px;
+      margin-bottom: 28px;
+    }
+    @media (min-width: 850px) {
+      .manage-layout {
+        grid-template-columns: 1.1fr 1.5fr;
+      }
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-section">
+        <h1>BIOMETRIC <span>PORTAL</span></h1>
+        <div class="logo-badge">SECURE HUB</div>
+      </div>
+      <nav>
+        <a href="{{ url_for('main.index') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          Dashboard
+        </a>
+        <a href="{{ url_for('main.upload_page') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload & Scan
+        </a>
+        <a href="{{ url_for('main.webcam_page') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Webcam Scanner
+        </a>
+        <a href="{{ url_for('main.manage_page') }}" class="active">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Face Registry
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px;">
+          Status: <span class="status-badge status-active">Online</span>
+        </span>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">Biometric Engine v1.3.0</span>
+      </div>
+    </header>
+
+    <main class="main-content" style="position: relative;">
+      <!-- Main Page Loading Overlay -->
+      <div class="loader-overlay" id="global-loader-overlay">
+        <div class="loader-spinner"></div>
+        <div class="loader-text" id="loader-status-text">Processing Encodings...</div>
+      </div>
+
+      <h2>Biometric Face Database</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 32px;">Register and manage credentialed identities. Newly added face profiles will automatically trigger encoder retraining routines to optimize matching accuracy.</p>
+
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          {% for m in messages %}
+            {% if "Error" in m or "Missing" in m or "No" in m or "failed" in m.lower() %}
+              <div class="flash">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                <span>{{ m }}</span>
+              </div>
+            {% else %}
+              <div class="flash" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.18); color: #a7f3d0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>{{ m }}</span>
+              </div>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <div class="manage-layout">
+        
+        <!-- Left Column: Add Face Form -->
+        <div class="card" style="display: flex; flex-direction: column;">
+          <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px; color: var(--primary);"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            Register Identity
+          </h3>
+          <form method="post" action="{{ url_for('main.add_face') }}" enctype="multipart/form-data" style="margin-top: 10px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;" id="register-form">
+            <div>
+              <div class="form-group">
+                <label for="name">Full Name / Tag</label>
+                <input type="text" id="name" name="name" required placeholder="e.g. Sarah Connor">
+              </div>
+              
+              <div class="form-group">
+                <label>Reference Portrait (Clear face only)</label>
+                <div class="file-dropzone" id="dropzone" style="margin-top: 8px; padding: 30px 20px;">
+                  <div class="file-dropzone-icon" style="font-size: 1.8rem; margin-bottom: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  </div>
+                  <div class="file-dropzone-text" id="dropzone-text" style="font-size: 0.85rem;">
+                    <span>Select photo file</span> or drag here
+                  </div>
+                  <input type="file" name="image" id="file-input" accept="image/*" required>
+                </div>
+              </div>
+
+              <!-- Preview Area -->
+              <div class="preview-container" id="preview-container" style="margin-top: -10px; margin-bottom: 20px;">
+                <img src="" id="preview-img" class="preview-thumbnail" alt="Selected Image Preview" style="max-height: 140px;">
+                <div class="preview-info" id="preview-info" style="font-size: 0.75rem;"></div>
+              </div>
+            </div>
+
+            <button type="submit" style="width: 100%;" id="register-btn" disabled>Create Profile</button>
+          </form>
+        </div>
+
+        <!-- Right Column: Registered Access Profiles -->
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin-bottom: 0;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px; color: var(--success);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Active Directory
+            </h3>
+            <span class="status-badge status-active">{{ persons|length }} Profiles</span>
+          </div>
+
+          {% if persons %}
+            <div class="people-grid">
+              {% for p in persons %}
+                <div class="person-card">
+                  <div>
+                    <div class="person-thumb-wrapper">
+                      {% if p.thumbnail %}
+                        <img src="{{ url_for('static', filename=p.thumbnail) }}" class="person-thumb" alt="{{ p.name }}">
+                      {% else %}
+                        <div class="person-avatar-placeholder">👤</div>
+                      {% endif %}
+                    </div>
+                    <div class="person-name" title="{{ p.name }}">{{ p.name }}</div>
+                  </div>
+                  
+                  <form method="post" action="{{ url_for('main.delete_face_route') }}" onsubmit="return confirmRevoke('{{ p.name }}')">
+                    <input type="hidden" name="name" value="{{ p.name }}">
+                    <button type="submit" class="btn-danger btn-secondary" style="width: 100%; padding: 8px 12px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                      Revoke
+                    </button>
+                  </form>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div style="text-align: center; padding: 48px; border: 2px dashed rgba(255, 255, 255, 0.08); border-radius: 20px; margin-top: 20px;">
+              <p style="color: var(--text-muted); font-size: 0.95rem; font-style: italic; margin-bottom: 0;">No access profiles registered in database yet.</p>
+            </div>
+          {% endif %}
+        </div>
+
+      </div>
+
+      <!-- Global Controls -->
+      <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; background: rgba(0, 0, 0, 0.25);">
+        <div>
+          <h4 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; color: #ffffff;">Calibrate Model Encodings</h4>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0;">Force a system-wide rebuild of all face models if directory files under static/faces/ are updated manually.</p>
+        </div>
+        <form method="post" action="{{ url_for('main.retrain') }}" id="retrain-form">
+          <button type="submit" class="btn-secondary">Rebuild Database</button>
+        </form>
+      </div>
+
+      <footer>
+        <a href="{{ url_for('main.index') }}" class="back-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Return to Dashboard
+        </a>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const dropzoneText = document.getElementById('dropzone-text');
+    const dropzone = document.getElementById('dropzone');
+    const previewContainer = document.getElementById('preview-container');
+    const previewImg = document.getElementById('preview-img');
+    const previewInfo = document.getElementById('preview-info');
+    const registerBtn = document.getElementById('register-btn');
+    
+    const registerForm = document.getElementById('register-form');
+    const retrainForm = document.getElementById('retrain-form');
+    const globalLoader = document.getElementById('global-loader-overlay');
+    const loaderText = document.getElementById('loader-status-text');
+
+    fileInput.addEventListener('change', (e) => {
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        
+        dropzoneText.innerHTML = `Selected: <strong style="color: var(--primary);">${file.name}</strong>`;
+        dropzone.style.borderColor = 'var(--primary)';
+        dropzone.style.background = 'rgba(0, 242, 254, 0.02)';
+
+        // Display thumbnail preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImg.src = e.target.result;
+          previewContainer.style.display = 'flex';
+          const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+          previewInfo.innerHTML = `Dimensions Checked | Size: ${sizeMB} MB`;
+          registerBtn.disabled = false;
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropzone.addEventListener(eventName, e => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--primary)';
+        dropzone.style.background = 'rgba(0, 242, 254, 0.03)';
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropzone.addEventListener(eventName, e => {
+        if (fileInput.files.length === 0) {
+          dropzone.style.borderColor = '';
+          dropzone.style.background = '';
+        }
+      }, false);
+    });
+
+    // Loading overlay handlers
+    registerForm.addEventListener('submit', () => {
+      loaderText.textContent = "Registering Identity & Encoding Face...";
+      globalLoader.style.display = 'flex';
+    });
+
+    retrainForm.addEventListener('submit', () => {
+      loaderText.textContent = "Rebuilding Neural Encodings Database...";
+      globalLoader.style.display = 'flex';
+    });
+
+    function confirmRevoke(name) {
+      return confirm(`WARNING: Are you sure you want to revoke and delete the biometric profile for "${name}"?\nThis action will delete all face credentials for this profile and trigger a neural cache rebuild.`);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Real-time webcam biometric scanner and identity verification interface.">
+  <title>Webcam Scanner - Biometric Portal</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1.0.3">
+  <style>
+    .activity-stream-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo-section">
+        <h1>BIOMETRIC <span>PORTAL</span></h1>
+        <div class="logo-badge">SECURE HUB</div>
+      </div>
+      <nav>
+        <a href="{{ url_for('main.index') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          Dashboard
+        </a>
+        <a href="{{ url_for('main.upload_page') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload & Scan
+        </a>
+        <a href="{{ url_for('main.webcam_page') }}" class="active">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Webcam Scanner
+        </a>
+        <a href="{{ url_for('main.manage_page') }}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Face Registry
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <span style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px;">
+          Status: <span class="status-badge status-active">Online</span>
+        </span>
+        <span style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">Biometric Engine v1.3.0</span>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <h2>Real-Time Webcam Diagnostics</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 32px;">Initialize your local video device to start live authentication scans. The biometric engine captures and reviews frame streams sequentially, overlaying identity bounding boxes on-screen.</p>
+
+      <div class="webcam-panel">
+        
+        <!-- Webcam Stream Viewport -->
+        <div class="webcam-wrapper">
+          <div class="webcam-container" id="scanner-container">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="overlay" width="640" height="480"></canvas>
+          </div>
+          
+          <div class="control-bar">
+            <button id="start">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Start Scan
+            </button>
+            <button id="stop" class="btn-danger" disabled>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+              Terminate
+            </button>
+          </div>
+        </div>
+
+        <!-- Activity Feed / Live Logs -->
+        <div class="card" style="margin-bottom: 0;">
+          <div class="activity-stream-header">
+            <h3 style="margin-bottom: 0;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px; color: var(--primary);"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Activity Stream
+            </h3>
+            <span id="scan-status" class="status-badge status-inactive">Scanner Offline</span>
+          </div>
+          
+          <div class="log-container" id="log-feed">
+            <div style="color: var(--text-muted); font-style: italic; padding: 6px 8px;">Scanner offline. Click Start Scan to initialize neural tracking...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hidden canvas for capturing snapshots -->
+      <canvas id="hidden-canvas" style="display: none;" width="640" height="480"></canvas>
+
+      <footer>
+        <a href="{{ url_for('main.index') }}" class="back-link">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Return to Dashboard
+        </a>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const overlay = document.getElementById('overlay');
+    const hiddenCanvas = document.getElementById('hidden-canvas');
+    const startBtn = document.getElementById('start');
+    const stopBtn = document.getElementById('stop');
+    const logFeed = document.getElementById('log-feed');
+    const scanStatus = document.getElementById('scan-status');
+    const scannerContainer = document.getElementById('scanner-container');
+
+    let stream = null;
+    let intervalId = null;
+    let animFrameId = null;
+    let currentFaces = [];
+    let rotationAngle = 0;
+    let scannerActive = false;
+
+    // Start Webcam scan
+    startBtn.onclick = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+        video.srcObject = stream;
+        
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        
+        scannerContainer.classList.add('scanning');
+        scanStatus.textContent = 'Active Scan';
+        scanStatus.className = 'status-badge status-active';
+        logFeed.innerHTML = '<div style="color: var(--primary); padding: 6px 8px; font-family: monospace;">[SYSTEM] Initializing visual neural model... Stream connected.</div>';
+        
+        scannerActive = true;
+        currentFaces = [];
+        
+        // Start continuous HUD rendering
+        renderHUD();
+        
+        // Poll API every 1000ms for face recognition
+        intervalId = setInterval(takeAndSendSnapshot, 1000);
+      } catch (e) {
+        alert("Camera initialization failed: " + e.message);
+      }
+    };
+
+    // Terminate webcam scan
+    stopBtn.onclick = () => {
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      
+      scannerContainer.classList.remove('scanning');
+      scanStatus.textContent = 'Scanner Offline';
+      scanStatus.className = 'status-badge status-inactive';
+      logFeed.innerHTML = '<div style="color: var(--text-muted); font-style: italic; padding: 6px 8px;">Scanner terminated. Stream offline.</div>';
+      
+      scannerActive = false;
+      clearInterval(intervalId);
+      cancelAnimationFrame(animFrameId);
+      
+      const ctx = overlay.getContext('2d');
+      ctx.clearRect(0, 0, overlay.width, overlay.height);
+      currentFaces = [];
+      
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+    };
+
+    // Snapshot routine
+    async function takeAndSendSnapshot() {
+      if (!scannerActive) return;
+      
+      const hiddenCtx = hiddenCanvas.getContext('2d');
+      hiddenCtx.drawImage(video, 0, 0, hiddenCanvas.width, hiddenCanvas.height);
+      
+      const dataUrl = hiddenCanvas.toDataURL('image/jpeg', 0.75);
+      
+      try {
+        const res = await fetch('{{ url_for("main.recognize_webcam") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: dataUrl })
+        });
+        
+        const json = await res.json();
+        
+        if (json.status === 'ok') {
+          currentFaces = json.results;
+          const timestamp = new Date().toLocaleTimeString();
+          
+          if (currentFaces.length > 0) {
+            let namesList = [];
+            currentFaces.forEach(r => namesList.push(r.name));
+            
+            const isKnown = currentFaces.some(r => r.name !== 'Unknown');
+            
+            // Log to stream
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${isKnown ? 'detected' : 'unknown'}`;
+            entry.innerHTML = `
+              <div class="log-entry-meta">
+                <span>[${timestamp}] DIAGNOSTIC SCAN</span>
+                <span>MATCH COUNT: ${currentFaces.length}</span>
+              </div>
+              <div style="font-weight: 600; font-size: 0.9rem;">
+                ${isKnown ? '✔ AUTHENTICATED' : '⚠ ACCESS ALERT'}: ${namesList.join(', ')}
+              </div>
+            `;
+            logFeed.insertBefore(entry, logFeed.firstChild);
+            
+            // Limit log entries
+            if (logFeed.children.length > 10) {
+              logFeed.removeChild(logFeed.lastChild);
+            }
+          } else {
+            logNoFaces(timestamp);
+          }
+        } else {
+          const timestamp = new Date().toLocaleTimeString();
+          logFeed.innerHTML = `<div style="color: var(--danger); padding: 6px 8px; font-family: monospace;">[${timestamp}] Core Error: ${json.message}</div>`;
+        }
+      } catch (err) {
+        console.error("Frame recognition fetch failure: ", err);
+      }
+    }
+
+    function logNoFaces(timestamp) {
+      const existingEntries = logFeed.querySelectorAll('.log-entry');
+      if (existingEntries.length === 0 || !existingEntries[0].textContent.includes('FEED CLEAR')) {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `
+          <div class="log-entry-meta">
+            <span>[${timestamp}] SCAN STATE</span>
+          </div>
+          <div style="color: var(--text-muted); font-style: italic;">Monitoring video feed... (FEED CLEAR)</div>
+        `;
+        logFeed.insertBefore(entry, logFeed.firstChild);
+        
+        if (logFeed.children.length > 10) {
+          logFeed.removeChild(logFeed.lastChild);
+        }
+      }
+    }
+
+    // High fidelity HUD Canvas renderer
+    function renderHUD() {
+      if (!scannerActive) return;
+      
+      const ctx = overlay.getContext('2d');
+      ctx.clearRect(0, 0, overlay.width, overlay.height);
+      
+      rotationAngle += 0.015;
+      
+      // Draw grid overlay lines
+      ctx.strokeStyle = 'rgba(0, 242, 254, 0.03)';
+      ctx.lineWidth = 1;
+      const step = 40;
+      for (let x = 0; x < overlay.width; x += step) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, overlay.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < overlay.height; y += step) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(overlay.width, y);
+        ctx.stroke();
+      }
+
+      if (currentFaces.length === 0) {
+        // Draw central alignment reticle
+        const cx = overlay.width / 2;
+        const cy = overlay.height / 2;
+        
+        ctx.strokeStyle = 'rgba(0, 242, 254, 0.2)';
+        ctx.lineWidth = 1.5;
+        
+        // Outer alignment circle
+        ctx.beginPath();
+        ctx.arc(cx, cy, 100, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Rotating tech rings
+        ctx.strokeStyle = 'rgba(0, 242, 254, 0.35)';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 110, rotationAngle, rotationAngle + Math.PI * 0.4);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.arc(cx, cy, 110, rotationAngle + Math.PI, rotationAngle + Math.PI * 1.4);
+        ctx.stroke();
+        
+        // Crosshairs
+        ctx.strokeStyle = 'rgba(0, 242, 254, 0.25)';
+        ctx.beginPath();
+        ctx.moveTo(cx - 130, cy); ctx.lineTo(cx - 90, cy);
+        ctx.moveTo(cx + 90, cy); ctx.lineTo(cx + 130, cy);
+        ctx.moveTo(cx, cy - 130); ctx.lineTo(cx, cy - 90);
+        ctx.moveTo(cx, cy + 90); ctx.lineTo(cx, cy + 130);
+        ctx.stroke();
+        
+        // Target Text
+        ctx.fillStyle = 'rgba(0, 242, 254, 0.6)';
+        ctx.font = '600 11px "Space Grotesk", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText("ALIGN FACE IN PORT PORTAL", cx, cy - 10);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.font = '500 9px "JetBrains Mono", monospace';
+        ctx.fillText("STANDBY / CORE ACTIVE", cx, cy + 15);
+      } else {
+        // Draw targets around detected faces
+        currentFaces.forEach(f => {
+          const { top, right, bottom, left } = f.box;
+          const isKnown = f.name !== 'Unknown';
+          const width = right - left;
+          const height = bottom - top;
+          const cx = left + width / 2;
+          const cy = top + height / 2;
+          
+          // Main Bounding Frame
+          ctx.strokeStyle = isKnown ? '#10b981' : '#f43f5e';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(left, top, width, height);
+          
+          // Corner Brackets
+          const bracketLen = Math.min(width, height) * 0.15;
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 3;
+          
+          // Top-Left
+          ctx.beginPath();
+          ctx.moveTo(left, top + bracketLen); ctx.lineTo(left, top); ctx.lineTo(left + bracketLen, top);
+          ctx.stroke();
+          
+          // Top-Right
+          ctx.beginPath();
+          ctx.moveTo(right, top + bracketLen); ctx.lineTo(right, top); ctx.lineTo(right - bracketLen, top);
+          ctx.stroke();
+          
+          // Bottom-Left
+          ctx.beginPath();
+          ctx.moveTo(left, bottom - bracketLen); ctx.lineTo(left, bottom); ctx.lineTo(left + bracketLen, bottom);
+          ctx.stroke();
+          
+          // Bottom-Right
+          ctx.beginPath();
+          ctx.moveTo(right, bottom - bracketLen); ctx.lineTo(right, bottom); ctx.lineTo(right - bracketLen, bottom);
+          ctx.stroke();
+
+          // Simulated Facial Biometric Nodes
+          ctx.fillStyle = isKnown ? 'rgba(16, 185, 129, 0.7)' : 'rgba(244, 63, 94, 0.7)';
+          const nodes = [
+            { x: left + width * 0.32, y: top + height * 0.4 }, // Left Eye
+            { x: left + width * 0.68, y: top + height * 0.4 }, // Right Eye
+            { x: cx, y: top + height * 0.55 },                 // Nose
+            { x: left + width * 0.35, y: top + height * 0.75 }, // Left Mouth Corner
+            { x: left + width * 0.65, y: top + height * 0.75 }, // Right Mouth Corner
+            { x: cx, y: top + height * 0.77 }                  // Chin Center
+          ];
+          
+          nodes.forEach(n => {
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+            // Node aura glow
+            ctx.fillStyle = isKnown ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.2)';
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = isKnown ? 'rgba(16, 185, 129, 0.7)' : 'rgba(244, 63, 94, 0.7)';
+          });
+          
+          // Connect facial map lines
+          ctx.strokeStyle = isKnown ? 'rgba(16, 185, 129, 0.3)' : 'rgba(244, 63, 94, 0.3)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3, 3]);
+          
+          ctx.beginPath();
+          ctx.moveTo(nodes[0].x, nodes[0].y); ctx.lineTo(nodes[1].x, nodes[1].y);
+          ctx.lineTo(nodes[2].x, nodes[2].y); ctx.closePath();
+          ctx.stroke();
+          
+          ctx.beginPath();
+          ctx.moveTo(nodes[2].x, nodes[2].y);
+          ctx.lineTo(nodes[3].x, nodes[3].y);
+          ctx.lineTo(nodes[5].x, nodes[5].y);
+          ctx.lineTo(nodes[4].x, nodes[4].y);
+          ctx.closePath();
+          ctx.stroke();
+          
+          ctx.setLineDash([]); // Reset dash
+
+          // Rotating HUD Scanner Target Ring around Face
+          const ringRad = Math.max(width, height) * 0.75;
+          ctx.strokeStyle = isKnown ? 'rgba(16, 185, 129, 0.4)' : 'rgba(244, 63, 94, 0.4)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(cx, cy, ringRad, rotationAngle, rotationAngle + Math.PI * 0.6);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cx, cy, ringRad, rotationAngle + Math.PI, rotationAngle + Math.PI * 1.6);
+          ctx.stroke();
+
+          // Text Data Card next to Bounding Box
+          const cardX = right + 12 < overlay.width - 160 ? right + 12 : left - 170;
+          const cardY = top;
+          
+          ctx.fillStyle = 'rgba(6, 8, 19, 0.75)';
+          ctx.fillRect(cardX, cardY, 155, 78);
+          ctx.strokeStyle = isKnown ? '#10b981' : '#f43f5e';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(cardX, cardY, 155, 78);
+          
+          // Neon small visual tab
+          ctx.fillStyle = isKnown ? '#10b981' : '#f43f5e';
+          ctx.fillRect(cardX, cardY, 4, 78);
+          
+          // Card Details
+          ctx.fillStyle = '#ffffff';
+          ctx.font = '600 11px "Space Grotesk", sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(`SUBJECT: ${f.name.toUpperCase()}`, cardX + 10, cardY + 18);
+          
+          ctx.fillStyle = varColorText();
+          ctx.font = '500 9px "JetBrains Mono", monospace';
+          ctx.fillText(`DB_INDEX: #F-${f.face_index}`, cardX + 10, cardY + 36);
+          
+          const accVal = f.distance ? ((1.0 - f.distance) * 100).toFixed(1) + '%' : 'N/A';
+          ctx.fillText(`ACCURACY: ${accVal}`, cardX + 10, cardY + 50);
+          
+          const statusVal = isKnown ? 'VERIFIED' : 'DENIED/ALERT';
+          ctx.fillStyle = isKnown ? '#10b981' : '#f43f5e';
+          ctx.font = 'bold 9px "Space Grotesk", sans-serif';
+          ctx.fillText(`STATUS: ${statusVal}`, cardX + 10, cardY + 66);
+          
+          function varColorText() {
+            return 'rgba(255, 255, 255, 0.5)';
+          }
+        });
+      }
+      
+      animFrameId = requestAnimationFrame(renderHUD);
+    }
+  </script>
+</body>
+</html>
