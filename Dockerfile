@@ -34,5 +34,5 @@ COPY . .
 ENV PORT=5000
 EXPOSE 5000
 
-# Start application server
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 2 --timeout 120 app:app"]
+# Start application server with shell execution so PORT environment variable resolves correctly
+CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 2 --timeout 120 app:app"]
